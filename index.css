@@ -72,4 +72,71 @@ input[type='file'] {
     width:800px;
 }
 
+.mouse-pointer{
+  background: url('./assets/icon/icons8-cursor-32.png');
+  height: 32px;
+  width: 32px;
+  display: block;
+}
 
+.button-crop{
+  background: url('./assets/icon/icons8-crop-32.png');
+  height: 32px;
+  width: 32px;
+  display: block;
+}
+
+.button-font{
+  background: url('./assets/icon/icons8-lowercase-32.png');
+  height: 32px;
+  width: 32px;
+  display: block;
+}
+.color-wheel {
+  background: url('./assets/icon/icons8-color-wheel-32.png');
+  height: 32px;
+  width: 32px;
+  display: block;
+}
+.edit-pen {
+  background: url('./assets/icon/icons8-pen-32.png');
+  height: 32px;
+  width: 32px;
+  display: block;
+}
+.edit-eraser {
+  background: url('./assets/icon/icons8-eraser-32.png');
+  height: 32px;
+  width: 32px;
+  display: block;
+}
+.edit-layer {
+  background: url('./assets/icon/icons8-layers-32.png');
+  height: 32px;
+  width: 32px;
+  display: block;
+}
+
+.button-bucket{
+  background: url('./assets/icon/icons8-paint-bucket-32.png');
+  height: 32px;
+  width: 32px;
+  display: block;
+}
+
+#dottedSelection {
+  border: 1px dotted black;
+  position: absolute;
+}
+
+#chosen-value{
+  display: none;
+  left: 300px;
+  top 100px;
+}
+
+/* 
+#dottedCrop{
+  border: 5px dotted rgb(114, 24, 24);
+  position: absolute;
+} */

@@ -12,6 +12,9 @@
     crossorigin="anonymous"></script>
   <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"
     integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+    <script src="./lib/jscolor.js"></script>
+    <link rel="stylesheet" href=" https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.4/cropper.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.4/cropper.js"></script>
 
 </head>
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -20,53 +23,110 @@
   <div class="collapse navbar-collapse" id="navbarSupportedContent">
     <ul class="navbar-nav mr-auto">
       <li class="nav-item active">
-        <button id="selectButton" type="button" class="btn" data-toggle="tooltip" data-placement="bottom" title="Select" disabled ><i class="fa fa-mouse-pointer" aria-hidden="true" ></i></button>
+        <button id="selectButton" type="button" class="btn" data-toggle="tooltip" data-placement="bottom" title="Select" disabled ><i class="mouse-pointer" aria-hidden="true" ></i></button>
       </li>
       <li class="nav-item">
-        <button id="cropButton" class="btn" data-toggle="tooltip" data-placement="bottom" title="crop" disabled ><i class="fa fa-crop" aria-hidden="true"></i></button>
+        <button id="cropButton" class="btn" data-toggle="tooltip" data-placement="bottom" title="crop" disabled ><i class="button-crop" aria-hidden="true"></i></button>
       </li>
       <li class="nav-item">
-          <button id="textButton" class="btn" data-toggle="tooltip" data-placement="bottom" title="Font" disabled ><i class="fa fa-font" aria-hidden="true"></i></button>
+          <button id="textButton" class="btn" data-toggle="tooltip" data-placement="bottom" title="Font" disabled ><i class="button-font" aria-hidden="true"></i></button>
         </li>
+
+        <li class="nav-item">
+          <button id="color-bucket" class="btn" data-toggle="tooltip" data-placement="bottom" title="bucket" disabled ><i class="button-bucket" aria-hidden="true"></i></button>
+        </li>
+
+        <li class="nav-item">
+          <button id="color-wheel" class="btn" data-toggle="tooltip" data-placement="bottom" title="color picker" disabled ><i class="color-wheel" aria-hidden="true"></i></button>
+        </li>
+        <li class="nav-item">
+          <button id="edit-pen" class="btn" data-toggle="tooltip" data-placement="bottom" title="color picker" disabled ><i class="edit-pen" aria-hidden="true"></i></button>
+        </li>
+ 
 
       <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
           aria-haspopup="true" aria-expanded="false">
-          Dropdown
+          12 point
         </a>
         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-          <a class="dropdown-item" href="#">Action</a>
-          <a class="dropdown-item" href="#">Another action</a>
-          <div class="dropdown-divider"></div>
-          <a class="dropdown-item" href="#">Something else here</a>
+          <a class="dropdown-item" >12 point</a>
+          <a class="dropdown-item" href="#">12 point</a>
+          <a class="dropdown-item" href="#">11 point</a>
+          <a class="dropdown-item" href="#">10 point</a>
+          <a class="dropdown-item" href="#">9 point</a>
+          <a class="dropdown-item" href="#">5 point</a>
         </div>
       </li>
-
+      <li class="nav-item">
+        <button id="edit-eraser" class="btn" data-toggle="tooltip" data-placement="bottom" title="edit eraser" disabled ><i class="edit-eraser" aria-hidden="true"></i></button>
+      </li>
+      <li class="nav-item">
+        <button id="edit-layer" class="btn" data-toggle="tooltip" data-placement="bottom" title="edit layer" disabled ><i class="edit-layer" aria-hidden="true"></i></button>
+      </li>
+      
+      <li class="nav-item dropdown" id="layer-lable">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
+          aria-haspopup="true" aria-expanded="false" >
+          layer 1
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdown" >
+          <a class="dropdown-item" href="#">layer 1</a>
+          <a class="dropdown-item" href="#">layer 2</a>
+          <a class="dropdown-item" href="#">layer 3</a>
+          <a class="dropdown-item" href="#">layer 4</a>
+        </div>
+      </li>
+      
+      
     </ul>
+    
 
   </div>
 </nav>
 
 
 <body>
+    
   <div id="mainWindow">
+      
     <div class="jumbotron input-container">
+        
       <div id="mainPage">
         <a id="browse-btn"><i class="fa fa-upload" aria-hidden="true"></i>
           <input type="file" id="real-input">
           Open Image
         </a>
       </div>
-
     </div>
-
-
   </div>
-
-  <div class="container">
-    <img id="imgid">
+  <input id="chosen-value" class="jscolor { position:'right'}" value="000000 ">
+<!-- Modal -->
+<div class="modal fade" id="settingModal" tabindex="-1" role="dialog" aria-labelledby="settingModal" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        
+        ...
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Save changes</button>
+      </div>
+    </div>
   </div>
+</div>
 
+<!-- div for selection -->
+<div id="dottedSelection" hidden></div>
+<!-- div for crop  -->
+<!-- <div id="dottedCrop" hidden></div> -->
 
 </body>
 <script type="text/javascript" src='index.js'></script>
@@ -78,4 +138,6 @@
       $("[rel='tooltip']").tooltip();
   });
 </script>
+
+
 </html>
