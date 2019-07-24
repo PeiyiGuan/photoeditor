@@ -2,14 +2,9 @@
  body {
   font-family: sans-serif;
 }
-/* 
- .input-container {
-  
-  max-width: 300px;
-  background-color: #EDEDED;
-  border: 1px solid rgba(15, 32, 223, 0.473);
-  border-radius: 5px;
-}  */
+
+
+
 .input-container{
   margin-top: 100px;
   margin-left: 50px;
@@ -17,6 +12,7 @@
     text-align: center;
     min-height :600px;
 }
+
 input[type='file'] {
   display: none;
 }
@@ -132,9 +128,42 @@ input[type='file'] {
 #chosen-value{
   display: none;
   left: 300px;
-  top 100px;
+  top :100px;
+}
+.text-block {
+  position: absolute;
+  background-color: white;
+  color: black;
+  padding-left: 20px;
+  padding-right: 20px;
+  
 }
 
+#text-content{
+  font-size: 13pt;
+}
+#toolbar-container{
+  position: absolute;
+  left: 150px;
+  top: 100px;
+  display: none;
+}
+
+#penSize{
+  position: absolute;
+  top:10px;
+  margin-left: 5px;
+}
+#layers{
+  position: absolute;
+  top:10px;
+  margin-left: 5px;
+
+}
+
+#edit-eraser{
+  margin-left: 100px;
+}
 /* 
 #dottedCrop{
   border: 5px dotted rgb(114, 24, 24);

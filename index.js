@@ -6,9 +6,13 @@ const selectButton = document.getElementById('selectButton');
 const cropButton = document.getElementById('cropButton');
 var selectionDottedLine = document.getElementById('dottedSelection')
 
+const fontEditor = document.getElementById('toolbar-container');
+const fontSelected = document.getElementById('fontVal');
+const fontSize = document.getElementById('fontSize');
+const penSize = document.getElementById('penSize');
+const layers = document.getElementById('layers');
 // import Cropper from 'cropperjs';
 //
-
 
 const colorWheel = document.getElementById('color-wheel');
 const colorBucket = document.getElementById('color-bucket');
@@ -27,17 +31,39 @@ const colorChosen = document.getElementById('chosen-value');
 
 //
 
-let cropper;
+const textBlock = document.getElementById('text-block');
+const textContent = document.getElementById('text-content')
+
+//
+// var canvas = document.getElementById('mycanvas');
+// var ctx = canvas.getContext("2d")
+
+
+// Add fonts to whitelist
+var Font = Quill.import('formats/font');
+// We do not add Aref Ruqaa since it is the default
+Font.whitelist = ['mirza', 'roboto'];
+Quill.register(Font, true);
+
+
+let cropper, quill;
+let canvas;
 let imageElement;
+let context;
 //static definition
 let SELECTBUTTON = 0;
 let CROPBUTTON = 1;
 let COLORBUCKET = 2;
 let COLORWHEEL = 3;
+let TEXTBUTTON = 4;
+let EDITPEN = 5;
+let ERASER = 6;
 let buttonState = []; // array of booleans
-let enableSelectionLine = true;
+let enableSelectionLine = false;
 let enableCropLine = true;
 let colorWheelEnabled = false;
+let drawingModeEnabled = false;
+let eraseModeEnabled = false;
 
 let s_x1 = 0, s_y1 = 0, s_x2 = 0, s_y2 = 0;
 let c_x1 = 0, c_y1 = 0, c_x2 = 0, c_y2 = 0;
@@ -45,9 +71,7 @@ let c_x1 = 0, c_y1 = 0, c_x2 = 0, c_y2 = 0;
 
 let setColor;
 
-
-
-
+let strokeColor;
 
 
 function init() {
@@ -70,12 +94,7 @@ function init() {
 
 function loadImage(rd) {
     uploadButton.style.display = "none";
-    let img = constructImage(rd.result);
-    img.style.width = "800px";
-    img.id = "srcImage";
-    mainPage.appendChild(img);
-    imageElement = img;
-    imageElement.addEventListener('click', () => imageClickHandler())
+    imgChange(rd.result);
     buildToolbar();
     initButtonState();
 
@@ -87,11 +106,14 @@ function imageClickHandler() { }
 function initButtonState() {
     buttonState[SELECTBUTTON] = false;
     buttonState[CROPBUTTON] = false;
+    buttonState[TEXTBUTTON] = false;
+    buttonState[EDITPEN] = false;
+    buttonState[ERASER] = false;
 }
 
 
 function buildToolbar() {
-    selectButton.style.background = "#4ec0b4"; // set to selected initialy
+    //  selectButton.style.background = "#4ec0b4"; // set to selected initialy
 
     selectButton.disabled = false;
     cropButton.disabled = false;
@@ -101,71 +123,134 @@ function buildToolbar() {
     editPen.disabled = false;
     editLayer.disabled = false;
     editEraser.disabled = false;
-
+    penSize.disabled = false;
+    layers.disabled = false;
     selectButton.addEventListener('click', (e) => selectHandler(e))
     cropButton.addEventListener('click', (e) => cropHandler(e))
     colorBucket.addEventListener('click', (e) => colorBucketHandler(e))
     colorWheel.addEventListener('click', (e) => colorWheelHandler(e))
-
-
-    setupSelection();
+    textButton.addEventListener('click', (e) => textButtonHanlder(e))
+    imageElement.addEventListener('click', (e) => imageClickHandler(e))
+    imageElement.addEventListener('dblclick', (e) => imagedbClickHandler(e))
+    fontSelected.addEventListener('change', (e) => {
+        textContent.style.fontStyle = `${fontSelected.value}`;
+    })
+    fontSize.addEventListener('change', (e) => {
+        textContent.style.fontSize = `${fontSize.value}pt`;
+    })
+    editPen.addEventListener('click', editPenHandler)
+    editEraser.addEventListener('click', editEraserHandler)
+    layers.addEventListener('change',layerHandler);
+    setupDrag();
 }
 
-function setupSelection() {
-    imageElement.addEventListener('mousedown', (e) => {
+let isDrawing = false;
+let lastX = 0;
+let lastY = 0;
 
-        selectionDottedLine.hidden = 0;
-        s_x1 = e.clientX;
-        s_y1 = e.clientY;
+function setupDrag() {
+    imageElement.addEventListener('mousedown', (e) => {
+        if (enableSelectionLine) {
+            selectionDottedLine.hidden = 0;
+            s_x1 = e.clientX;
+            s_y1 = e.clientY;
+        }
+
+        if (drawingModeEnabled || eraseModeEnabled) {
+            isDrawing = true;
+            [lastX, lastY] = [e.offsetX, e.offsetY];
+        }
 
     });
     imageElement.addEventListener('mousemove', (e) => {
-
-
         if (enableSelectionLine) {
             s_x2 = e.clientX;
             s_y2 = e.clientY;
             reCalc(selectionDottedLine, s_x1, s_x2, s_y1, s_y2);
         }
+        if (drawingModeEnabled)
+            draw(e, false);
+        if(eraseModeEnabled)
+            draw(e,true)
     })
     imageElement.addEventListener('mouseup', (e) => {
         enableSelectionLine = false;
-
-        //selectionDottedLine.hidden;
-        // switchImageSrc("file:///C:/Users/peiyi/Desktop/summer%202019/eecs3461/assignement3/photoeditor/assets/image/dogie_select.jpg")
+        isDrawing = false;
     })
+
+    imageElement.addEventListener('mouseout', (e) => {
+        enableSelectionLine = false;
+        isDrawing = false;
+    })
+
 
 }
 
 
-function selectHandler(e) {
-    enableLine = false;
+let str = "";
+function logKey(e) {
 
-    let img = getImageElement();
-    img.style.cursor = ""
+    if (e.code == "Enter") {
+        document.removeEventListener("keypress", logKey);
+        console.log("enter pressed");
+    } else {
+        str += ` ${e.code}`;
+        textContent.innerHTML += `${e.key}`;
+    }
+
+}
+
+function imagedbClickHandler(e) {
+    //double click write text in
+
+    textBlock.style.left = `${e.clientX}px`;
+    textBlock.style.top = `${e.clientY}px`;
+    document.addEventListener('keypress', logKey);
+
+}
+
+
+
+function selectHandler(e) {
+    buttonState[CROPBUTTON] = false;
+    buttonState[EDITPEN] = false;
+    buttonState[ERASER] = false;
+
+    drawingModeEnabled = false;
+    eraseModeEnabled = false;
+
+    editEraser.style.background = '#F8F9FA';
+    cropButton.style.background = '#F8F9FA';
+    editPen.style.background = '#F8F9FA';
+
     if (!buttonState[SELECTBUTTON]) {
-        if (buttonState[CROPBUTTON]) {
-            buttonState[CROPBUTTON] = false;
-            cropButton.style.background = '#F8F9FA';
-        }
 
         buttonState[SELECTBUTTON] = true;
         selectButton.style.background = "#4ec0b4";
         //enable selection
-        enableLine = true;
+        enableSelectionLine = true;
 
     }
     else {
         buttonState[SELECTBUTTON] = false;
         selectButton.style.background = "#F8F9FA"
         // disable 
-        enableLine = false;
+        enableSelectionLine = false;
     }
 }
 
 function cropHandler(e) {
     selectButton.style.background = '#F8F9FA';
     buttonState[SELECTBUTTON] = false;
+    editPen.style.background = '#F8F9FA';
+    editEraser.style.background = '#F8F9FA';
+    buttonState[EDITPEN] = false;
+    buttonState[ERASER] = false;
+
+    eraseModeEnabled = false;
+    drawingModeEnabled = false;
+    enableSelectionLine = false;
+
     if (!buttonState[CROPBUTTON]) {
         buttonState[CROPBUTTON] = true;
         cropButton.style.background = "#4ec0b4";
@@ -174,13 +259,13 @@ function cropHandler(e) {
         cropper = new Cropper(imageElement, {
             aspectRatio: 16 / 9,
             crop(event) {
-                console.log(event.detail.x);
-                console.log(event.detail.y);
-                console.log(event.detail.width);
-                console.log(event.detail.height);
-                console.log(event.detail.rotate);
-                console.log(event.detail.scaleX);
-                console.log(event.detail.scaleY);
+                // console.log(event.detail.x);
+                // console.log(event.detail.y);
+                // console.log(event.detail.width);
+                // console.log(event.detail.height);
+                // console.log(event.detail.rotate);
+                // console.log(event.detail.scaleX);
+                // console.log(event.detail.scaleY);
             },
         });
 
@@ -192,8 +277,7 @@ function cropHandler(e) {
         imageElement.style.cursor = ""
         let src = cropper.getCroppedCanvas().toDataURL();
         cropper.destroy()
-        let newImage = constructImage(src);
-        imageElement.src = src;
+        imgChange(src)
 
 
     }
@@ -214,40 +298,83 @@ function colorWheelHandler(e) {
 
 }
 
+function textButtonHanlder(e) {
 
+    if (!buttonState[TEXTBUTTON]) {
+        buttonState[TEXTBUTTON] = true;
+        textButton.style.background = "#4ec0b4";
+        fontEditor.style.display = "block";
+
+
+    } else {
+        buttonState[TEXTBUTTON] = false;
+        textButton.style.background = "#F8F9FA";
+        fontEditor.style.display = "none";
+    }
+
+}
 
 
 function colorBucketHandler(e) {
-    //switch to colored picture
-    // if(!buttonState[COLORBUCKET]){
-    //     buttonState[COLORBUCKET] = true;
-    //     colorBucket.style.background = "#4ec0b4";
 
-    // }else{
-    //     buttonState[COLORBUCKET] = false;
-    //     colorBucket.style.background = "#F8F9FA";
-
-    // }
     setColor = colorChosen.value;
     selectionDottedLine.style.background = "#" + setColor;
-    // switchImageSrc("")
+
 }
 
+function editPenHandler(e) {
+    buttonState[CROPBUTTON] = false;
+    buttonState[SELECTBUTTON] = false;
+    buttonState[ERASER] = false;
+    enableSelectionLine = false;
+    eraseModeEnabled = false;
 
+    cropButton.style.background = '#F8F9FA';
+    selectButton.style.background = '#F8F9FA';
+    editEraser.style.background = '#F8F9FA';
 
+    if (!buttonState[EDITPEN]) {
+        buttonState[EDITPEN] = true;
+        editPen.style.background = '#4ec0b4';
+        imageElement.style.cursor = "url('./assets/icon/pen.png')"  // change to pen cursor
+        drawingModeEnabled = true;
 
-function getImageElement() {
-    if (imageElement)
-        return imageElement
-    else
-        return document.getElementById('srcImage')
+    } else {
+        buttonState[EDITPEN] = false;
+        editPen.style.background = '#F8F9FA';
+        imageElement.style.cursor = "";// change back to normal cursor
+        drawingModeEnabled = false;
+    }
 }
 
+function editEraserHandler(e) {
+    buttonState[CROPBUTTON] = false;
+    buttonState[SELECTBUTTON] = false;
+    buttonState[EDITPEN] = false;
+    enableSelectionLine = false;
+    drawingModeEnabled = false;
+    cropButton.style.background = '#F8F9FA';
+    selectButton.style.background = '#F8F9FA';
+    editPen.style.background = '#F8F9FA';
 
+    if (!buttonState[ERASER]) {
+        buttonState[ERASER] = true;
+        eraseModeEnabled = true;
+        editEraser.style.background = '#4ec0b4';
 
-function switchImageSrc(path) {
-    imageElement.src = path;
+    }else{
+        buttonState[ERASER] = false;
+        eraseModeEnabled = false;
+        editEraser.style.background = '#F8F9FA';
+    }
+
 }
+
+function layerHandler(e){
+    var c = document.getElementById("mycanvas");
+    c.style.opacity = layers.value / 4
+}
+
 
 
 function reCalc(dragline, x1, x2, y1, y2) {
@@ -269,5 +396,40 @@ function constructImage(src) {
     return imgElement;
 }
 
+function imgChange(imagePath) {
+    var c = document.getElementById("mycanvas");
+    imageElement = c;
+    var ctx = c.getContext("2d");
+    context = ctx;
+    var img = new Image();
+    img.onload = function () {
+        c.width = img.width * 0.4;
+        c.height = img.height * 0.4;
+        ctx.drawImage(img, 0, 0, c.width, c.height);
+    };
+    img.src = imagePath;
+}
+
+function draw(e, eraser) {
+    // stop the function if they are not mouse down
+    if (!isDrawing) return;
+    //listen for mouse move event
+
+    context.lineJoin = 'round';
+    context.lineCap = 'round';
+    context.lineWidth = `${penSize.value}`;
+    if (!eraser)
+        context.strokeStyle = `#${colorChosen.value}`;
+    else
+        context.strokeStyle = `#ffffff`;
+
+    context.beginPath();
+    context.moveTo(lastX, lastY);
+    context.lineTo(e.offsetX, e.offsetY);
+    context.stroke();
+    [lastX, lastY] = [e.offsetX, e.offsetY];
+}
+
 
 window.onload = init();
+
