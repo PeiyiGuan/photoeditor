@@ -209,8 +209,6 @@ function imagedbClickHandler(e) {
 
 }
 
-
-
 function selectHandler(e) {
     buttonState[CROPBUTTON] = false;
     buttonState[EDITPEN] = false;
@@ -276,8 +274,21 @@ function cropHandler(e) {
         cropButton.style.background = "#F8F9FA"
         imageElement.style.cursor = ""
         let src = cropper.getCroppedCanvas().toDataURL();
+   
+        var c = document.getElementById("mycanvas");
+        imageElement = c;
+        var ctx = c.getContext("2d");
+        context = ctx;
+        var img = new Image();
+        img.onload = function () {
+            c.width = img.width;
+            c.height = img.height;
+            ctx.drawImage(img, 0, 0, c.width, c.height);
+        };
+
+        img.src = src;
         cropper.destroy()
-        imgChange(src)
+        
 
 
     }
